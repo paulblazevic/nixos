@@ -1,5 +1,5 @@
 {
-  description = "Paul's NixOS config for 5+ machines";
+  description = "Paul's fleet — main machine + 5+ identical clones";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05";
@@ -12,26 +12,25 @@
   outputs = { self, nixpkgs, home-manager, ... }:
   let
     system = "x86_64-linux";
-    pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
   in {
-    nixosConfigurations = {
-      nixos1 = pkgs.lib.nixosSystem {
-        inherit system;
-        modules = [ ./configuration.nix home-manager.nixosModules.home-manager {
+    # Your main machine
+    nixosConfigurations.paulsbox = nixpkgs.lib.nixosSystem {
+      inherit system;
+      modules = [
+        ./configuration.nix
+        home-manager.nixosModules.home-manager
+        {
           home-manager.useGlobalPkgs = true;
           home-manager.useUserPackages = true;
           home-manager.users.paul = import ./home.nix;
-        }];
-      };
-      nixos2 = pkgs.lib.nixosSystem {
-        inherit system;
-        modules = [ ./configuration.nix home-manager.nixosModules.home-manager {
-          home-manager.useGlobalPkgs = true;
-          home-manager.useUserPackages = true;
-          home-manager.users.paul = import ./home.nix;
-        }];
-      };
-      # Add nixos3, nixos4, nixos5, etc. as needed
+        }
+      ];
     };
+
+    # Future identical clones (just add more when you get them)
+    nixosConfigurations.clone1 = nixpkgs.lib.nixosSystem { inherit system; modules = [ ./configuration.nix ./home.nix ]; };
+    nixosConfigurations.clone2 = nixpkgs.lib.nixosSystem { inherit system; modules = [ ./configuration.nix ./home.nix ]; };
+    nixosConfigurations.clone3 = nixpkgs.lib.nixosSystem { inherit system; modules = [ ./configuration.nix ./home.nix ]; };
+    # …add clone4, clone5, etc. whenever you want
   };
 }
