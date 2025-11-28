@@ -1,0 +1,716 @@
+RATION
+  # ============================================================================
+
+  home-manager.useUserPackages = true;
+  home-manager.useGlobalPkgs = true;
+  home-manager.backupFileExtension = "backup";
+
+  home-manager.users.paul = { pkgs, ... }: {
+    home.stateVersion = "25.05";
+
+    # =========================================================================
+    # PACKAGES
+    # =========================================================================
+
+    home.packages = with pkgs; [
+      # Additional nice-to-haves
+      lm_sensors
+      playerctl
+    ];
+
+    # =========================================================================
+    # GTK THEMING
+    # =========================================================================
+
+    gtk = {
+      enable = true;
+      theme = {
+        name = "Catppuccin-Mocha-Standard-Blue-Dark";
+        package = pkgs.catppuccin-gtk.override {
+          accents = [ "blue" ];
+          variant = "mocha";
+        };
+      };
+      iconTheme = {
+        name = "Papirus-Dark";
+        package = pkgs.papirus-icon-theme;
+      };
+      cursorTheme = {
+        name = "catppuccin-mocha-dark-cursors";
+        package = pkgs.catppuccin-cursors.mochaDark;
+        size = 24;
+      };
+      gtk3.extraConfig = {
+        gtk-application-prefer-dark-theme = 1;
+      };
+      gtk4.extraConfig = {
+        gtk-application-prefer-dark-theme = 1;
+      };
+    };
+
+    # =========================================================================
+    # QT THEMING
+    # =========================================================================
+
+    qt = {
+      enable = true;
+      platformTheme.name = "kvantum";
+      style.name = "kvantum";
+    };
+
+    xdg.configFile."Kvantum/kvantum.kvconfig".text = ''
+      [General]
+      theme=Catppuccin-Mocha-Blue
+    '';
+
+    # =========================================================================
+    # GIT
+    # =========================================================================
+
+    programs.git = {
+      enable = true;
+      userName = "Paul Blazevic";
+      userEmail = "paul@nixos.local";
+      extraConfig = {
+        init.defaultBranch = "main";
+        pull.rebase = false;
+      };
+    };
+
+    # =========================================================================
+    # FISH SHELL
+    # =========================================================================
+
+    programs.fish = {
+      enable = true;
+      interactiveShellInit = ''
+        set fish_greeting
+        starship init fish | source
+      '';
+      shellAliases = {
+        ls = "eza --icons";
+        ll = "eza -la --icons";
+        cat = "bat";
+        cd = "z";
+        vim = "nvim";
+        rebuild = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
+      };
+    };
+
+    # =========================================================================
+    # STARSHIP PROMPT
+    # =========================================================================
+
+    programs.starship = {
+      enable = true;
+      settings = {
+        format = "$all";
+        add_newline = true;
+        character = {
+          success_symbol = "[➜](bold green)";
+          error_symbol = "[➜](bold red)";
+        };
+      };
+    };
+
+    # =========================================================================
+    # KITTY TERMINAL
+    # =========================================================================
+
+    programs.kitty = {
+      enable = true;
+      font = {
+        name = "JetBrainsMono Nerd Font";
+        size = 12;
+      };
+      settings = {
+        background_opacity = "0.85";
+        confirm_os_window_close = 0;
+        enable_audio_bell = false;
+        cursor_shape = "beam";
+        cursor_blink_interval = 0;
+        window_padding_width = 10;
+
+        # Catppuccin Mocha colors
+        foreground = "#CDD6F4";
+        background = "#1E1E2E";
+        selection_foreground = "#1E1E2E";
+        selection_background = "#F5E0DC";
+
+        # Black
+        color0 = "#45475A";
+        color8 = "#585B70";
+
+        # Red
+        color1 = "#F38BA8";
+        color9 = "#F38BA8";
+
+        # Green
+        color2 = "#A6E3A1";
+        color10 = "#A6E3A1";
+
+        # Yellow
+        color3 = "#F9E2AF";
+        color11 = "#F9E2AF";
+
+        # Blue
+        color4 = "#89B4FA";
+        color12 = "#89B4FA";
+
+        # Magenta
+        color5 = "#F5C2E7";
+        color13 = "#F5C2E7";
+
+        # Cyan
+        color6 = "#94E2D5";
+        color14 = "#94E2D5";
+
+        # White
+        color7 = "#BAC2DE";
+        color15 = "#A6ADC8";
+      };
+    };
+
+    # =========================================================================
+    # HYPRLAND CONFIGURATION
+    # =========================================================================
+
+    wayland.windowManager.hyprland = {
+      enable = true;
+      systemd.enable = true;
+      xwayland.enable = true;
+
+      settings = {
+        # Monitor setup
+        monitor = ",preferred,auto,1";
+
+        # Autostart
+        exec-once = [
+          "swww-daemon"
+          "swww img ~/Pictures/Wallpapers/catppuccin-anime.jpg --transition-type wipe --transition-fps 60"
+          "waybar"
+          "dunst"
+          "hypridle"
+          "wl-paste --type text --watch cliphist store"
+          "wl-paste --type image --watch cliphist store"
+          "nm-applet --indicator"
+          "blueman-applet"
+        ];
+
+        # Environment variables
+        env = [
+          "XCURSOR_SIZE,24"
+          "XCURSOR_THEME,catppuccin-mocha-dark-cursors"
+          "QT_QPA_PLATFORMTHEME,qt5ct"
+        ];
+
+        # Input configuration
+        input = {
+          kb_layout = "us";
+          follow_mouse = 1;
+          touchpad = {
+            natural_scroll = true;
+            disable_while_typing = true;
+            tap-to-click = true;
+          };
+          sensitivity = 0;
+        };
+
+        # General settings
+        general = {
+          gaps_in = 8;
+          gaps_out = 16;
+          border_size = 3;
+          "col.active_border" = "rgba(89b4faff) rgba(cba6f7ff) 45deg";
+          "col.inactive_border" = "rgba(313244aa)";
+          layout = "dwindle";
+          resize_on_border = true;
+        };
+
+        # Decorations
+        decoration = {
+          rounding = 16;
+
+          blur = {
+            enabled = true;
+            size = 6;
+            passes = 3;
+            new_optimizations = true;
+            xray = false;
+            ignore_opacity = true;
+          };
+
+          drop_shadow = true;
+          shadow_range = 20;
+          shadow_render_power = 3;
+          "col.shadow" = "rgba(00000099)";
+
+          dim_inactive = false;
+        };
+
+        # Animations - SMOOTH AS BUTTER
+        animations = {
+          enabled = true;
+
+          bezier = [
+            "wind, 0.05, 0.9, 0.1, 1.05"
+            "winIn, 0.1, 1.1, 0.1, 1.1"
+            "winOut, 0.3, -0.3, 0, 1"
+            "liner, 1, 1, 1, 1"
+          ];
+
+          animation = [
+            "windows, 1, 6, wind, slide"
+            "windowsIn, 1, 6, winIn, slide"
+            "windowsOut, 1, 5, winOut, slide"
+            "windowsMove, 1, 5, wind, slide"
+            "border, 1, 1, liner"
+            "borderangle, 1, 30, liner, loop"
+            "fade, 1, 10, default"
+            "workspaces, 1, 5, wind"
+          ];
+        };
+
+        # Layout config
+        dwindle = {
+          pseudotile = true;
+          preserve_split = true;
+          smart_split = false;
+          force_split = 2;
+        };
+
+        master = {
+          new_status = "master";
+        };
+
+        # Gestures
+        gestures = {
+          workspace_swipe = true;
+          workspace_swipe_fingers = 3;
+          workspace_swipe_distance = 300;
+        };
+
+        # Misc settings
+        misc = {
+          force_default_wallpaper = 0;
+          disable_hyprland_logo = true;
+          disable_splash_rendering = true;
+          mouse_move_enables_dpms = true;
+          key_press_enables_dpms = true;
+          vrr = 0;
+          animate_manual_resizes = true;
+          animate_mouse_windowdragging = true;
+        };
+
+        # Window rules
+        windowrulev2 = [
+          "float,class:(pavucontrol)"
+          "float,class:(blueman-manager)"
+          "float,class:(nm-connection-editor)"
+          "opacity 0.90 0.90,class:^(kitty)$"
+          "opacity 0.85 0.85,class:^(thunar)$"
+          "opacity 0.90 0.90,class:^(Code)$"
+        ];
+      };
+
+      # Keybindings
+      extraConfig = ''
+        $mainMod = SUPER
+
+        # Applications
+        bind = $mainMod, Return, exec, kitty
+        bind = $mainMod, Q, killactive
+        bind = $mainMod, M, exit
+        bind = $mainMod, E, exec, thunar
+        bind = $mainMod, V, togglefloating
+        bind = $mainMod, D, exec, rofi -show drun -show-icons
+        bind = $mainMod, P, pseudo
+        bind = $mainMod, J, togglesplit
+        bind = $mainMod, F, fullscreen
+        bind = $mainMod, L, exec, swaylock -f --screenshots --effect-blur 7x5 --clock --indicator
+        bind = $mainMod SHIFT, X, exec, wlogout
+
+        # Utilities
+        bind = $mainMod, C, exec, cliphist list | rofi -dmenu | cliphist decode | wl-copy
+        bind = $mainMod, period, exec, rofi -show emoji
+        bind = $mainMod SHIFT, S, exec, grim -g "$(slurp)" ~/Pictures/Screenshots/screenshot-$(date +%Y%m%d-%H%M%S).png
+        bind = , Print, exec, grim ~/Pictures/Screenshots/screenshot-$(date +%Y%m%d-%H%M%S).png
+
+        # Move focus with mainMod + arrow keys
+        bind = $mainMod, left, movefocus, l
+        bind = $mainMod, right, movefocus, r
+        bind = $mainMod, up, movefocus, u
+        bind = $mainMod, down, movefocus, d
+
+        # Move focus with mainMod + vim keys
+        bind = $mainMod, h, movefocus, l
+        bind = $mainMod, l, movefocus, r
+        bind = $mainMod, k, movefocus, u
+        bind = $mainMod, j, movefocus, d
+
+        # Move windows
+        bind = $mainMod SHIFT, left, movewindow, l
+        bind = $mainMod SHIFT, right, movewindow, r
+        bind = $mainMod SHIFT, up, movewindow, u
+        bind = $mainMod SHIFT, down, movewindow, d
+
+        # Resize windows
+        bind = $mainMod CTRL, left, resizeactive, -40 0
+        bind = $mainMod CTRL, right, resizeactive, 40 0
+        bind = $mainMod CTRL, up, resizeactive, 0 -40
+        bind = $mainMod CTRL, down, resizeactive, 0 40
+
+        # Switch workspaces
+        ${builtins.concatStringsSep "\n" (map (i: "bind = $mainMod, ${toString i}, workspace, ${toString i}") (lib.range 1 9))}
+        bind = $mainMod, 0, workspace, 10
+
+        # Move window to workspace
+        ${builtins.concatStringsSep "\n" (map (i: "bind = $mainMod SHIFT, ${toString i}, movetoworkspace, ${toString i}") (lib.range 1 9))}
+        bind = $mainMod SHIFT, 0, movetoworkspace, 10
+
+        # Scroll through workspaces
+        bind = $mainMod, mouse_down, workspace, e+1
+        bind = $mainMod, mouse_up, workspace, e-1
+
+        # Move/resize windows with mouse
+        bindm = $mainMod, mouse:272, movewindow
+        bindm = $mainMod, mouse:273, resizewindow
+
+        # Media keys
+        bindel = , XF86AudioRaiseVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+
+        bindel = , XF86AudioLowerVolume, exec, wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-
+        bindl = , XF86AudioMute, exec, wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle
+        bindl = , XF86AudioPlay, exec, playerctl play-pause
+        bindl = , XF86AudioNext, exec, playerctl next
+        bindl = , XF86AudioPrev, exec, playerctl previous
+      '';
+    };
+
+    # =========================================================================
+    # WAYBAR - BEAUTIFUL STATUS BAR
+    # =========================================================================
+
+    programs.waybar = {
+      enable = true;
+      systemd.enable = true;
+
+      settings = {
+        mainBar = {
+          layer = "top";
+          position = "top";
+          height = 42;
+          spacing = 8;
+
+          modules-left = [ "hyprland/workspaces" "hyprland/window" ];
+          modules-center = [ "clock" ];
+          modules-right = [
+            "pulseaudio"
+            "network"
+            "cpu"
+            "memory"
+            "temperature"
+            "battery"
+            "tray"
+          ];
+
+          "hyprland/workspaces" = {
+            format = "{icon}";
+            on-click = "activate";
+            format-icons = {
+              "1" = "󰈹";
+              "2" = "";
+              "3" = "";
+              "4" = "";
+              "5" = "";
+              "6" = "";
+              "7" = "";
+              "8" = "";
+              "9" = "";
+              "active" = "";
+              "default" = "";
+            };
+            persistent-workspaces = {
+              "*" = 9;
+            };
+          };
+
+          "hyprland/window" = {
+            format = "{}";
+            max-length = 50;
+            separate-outputs = true;
+          };
+
+          clock = {
+            format = " {:%I:%M %p}";
+            format-alt = " {:%A, %B %d, %Y (%I:%M %p)}";
+            tooltip-format = "<tt><small>{calendar}</small></tt>";
+            calendar = {
+              mode = "year";
+              mode-mon-col = 3;
+              weeks-pos = "right";
+              on-scroll = 1;
+              format = {
+                months = "<span color='#f5e0dc'><b>{}</b></span>";
+                days = "<span color='#cdd6f4'>{}</span>";
+                weeks = "<span color='#89dceb'><b>W{}</b></span>";
+                weekdays = "<span color='#f9e2af'><b>{}</b></span>";
+                today = "<span color='#f38ba8'><b><u>{}</u></b></span>";
+              };
+            };
+          };
+
+          cpu = {
+            format = " {usage}%";
+            interval = 2;
+            tooltip = true;
+          };
+
+          memory = {
+            format = " {}%";
+            interval = 2;
+            tooltip-format = "RAM: {used:0.1f}G / {total:0.1f}G";
+          };
+
+          temperature = {
+            critical-threshold = 80;
+            format = "{icon} {temperatureC}°C";
+            format-icons = ["" "" "" "" ""];
+          };
+
+          battery = {
+            states = {
+              warning = 30;
+              critical = 15;
+            };
+            format = "{icon} {capacity}%";
+            format-charging = " {capacity}%";
+            format-plugged = " {capacity}%";
+            format-full = " {capacity}%";
+            format-icons = ["" "" "" "" ""];
+            tooltip-format = "{timeTo}\n{power}W";
+          };
+
+          network = {
+            format-wifi = " {essid}";
+            format-ethernet = " Connected";
+            format-disconnected = "⚠ Disconnected";
+            tooltip-format = "{ifname}: {ipaddr}/{cidr}\n {bandwidthUpBytes}  {bandwidthDownBytes}";
+            on-click = "nm-connection-editor";
+          };
+
+          pulseaudio = {
+            format = "{icon} {volume}%";
+            format-muted = " Muted";
+            format-icons = {
+              default = ["" "" ""];
+              headphone = "";
+              headset = "";
+            };
+            on-click = "pavucontrol";
+            tooltip-format = "{desc}\n{volume}%";
+          };
+
+          tray = {
+            icon-size = 18;
+            spacing = 10;
+          };
+        };
+      };
+
+      style = ''
+        * {
+          font-family: "JetBrainsMono Nerd Font";
+          font-size: 14px;
+          font-weight: 600;
+          border: none;
+          border-radius: 0;
+          min-height: 0;
+        }
+
+        window#waybar {
+          background: rgba(30, 30, 46, 0.8);
+          backdrop-filter: blur(10px);
+          color: #cdd6f4;
+        }
+
+        #workspaces {
+          background: transparent;
+          margin: 5px 5px 5px 10px;
+          padding: 0 5px;
+        }
+
+        #workspaces button {
+          padding: 0 8px;
+          color: #6c7086;
+          background: transparent;
+          border-radius: 12px;
+          margin: 0 2px;
+          transition: all 0.3s ease;
+        }
+
+        #workspaces button.active {
+          color: #89b4fa;
+          background: rgba(137, 180, 250, 0.2);
+        }
+
+        #workspaces button:hover {
+          color: #cdd6f4;
+          background: rgba(205, 214, 244, 0.1);
+        }
+
+        #window {
+          margin: 5px 10px;
+          padding: 0 10px;
+          color: #f5e0dc;
+        }
+
+        #clock,
+        #battery,
+        #cpu,
+        #memory,
+        #temperature,
+        #network,
+        #pulseaudio,
+        #tray {
+          padding: 0 12px;
+          margin: 5px 3px;
+          background: rgba(49, 50, 68, 0.6);
+          border-radius: 12px;
+        }
+
+        #clock {
+          color: #f5e0dc;
+          background: rgba(245, 224, 220, 0.15);
+          font-weight: 700;
+        }
+
+        #battery {
+          color: #a6e3a1;
+        }
+
+        #battery.charging {
+          color: #a6e3a1;
+        }
+
+        #battery.warning:not(.charging) {
+          color: #f9e2af;
+        }
+
+        #battery.critical:not(.charging) {
+          color: #f38ba8;
+        }
+
+        #cpu {
+          color: #89b4fa;
+        }
+
+        #memory {
+          color: #cba6f7;
+        }
+
+        #temperature {
+          color: #fab387;
+        }
+
+        #temperature.critical {
+          color: #f38ba8;
+        }
+
+        #network {
+          color: #94e2d5;
+        }
+
+        #pulseaudio {
+          color: #f9e2af;
+        }
+
+        #pulseaudio.muted {
+          color: #6c7086;
+        }
+
+        #tray {
+          padding: 0 10px;
+          margin-right: 10px;
+        }
+
+        tooltip {
+          background: rgba(30, 30, 46, 0.95);
+          border: 2px solid #89b4fa;
+          border-radius: 12px;
+        }
+
+        tooltip label {
+          color: #cdd6f4;
+        }
+      '';
+    };
+
+    # =========================================================================
+    # DUNST - NOTIFICATIONS
+    # =========================================================================
+
+    services.dunst = {
+      enable = true;
+      settings = {
+        global = {
+          width = 350;
+          height = 300;
+          offset = "30x50";
+          origin = "top-right";
+          transparency = 10;
+          frame_color = "#89b4fa";
+          font = "JetBrainsMono Nerd Font 11";
+          corner_radius = 12;
+          padding = 16;
+          horizontal_padding = 16;
+          icon_position = "left";
+          max_icon_size = 64;
+        };
+
+        urgency_low = {
+          background = "#1e1e2e";
+          foreground = "#cdd6f4";
+          timeout = 5;
+        };
+
+        urgency_normal = {
+          background = "#1e1e2e";
+          foreground = "#cdd6f4";
+          timeout = 10;
+        };
+
+        urgency_critical = {
+          background = "#1e1e2e";
+          foreground = "#f38ba8";
+          frame_color = "#f38ba8";
+          timeout = 0;
+        };
+      };
+    };
+
+    # =========================================================================
+    # ROFI - APPLICATION LAUNCHER
+    # =========================================================================
+
+    programs.rofi = {
+      enable = true;
+      package = pkgs.rofi-wayland;
+      theme = "catppuccin-mocha";
+      extraConfig = {
+        modi = "drun,run,window";
+        show-icons = true;
+        display-drun = " Apps";
+        display-run = " Run";
+        display-window = " Windows";
+        drun-display-format = "{name}";
+        window-format = "{w} · {c} · {t}";
+      };
+    };
+  };
+
+  # ============================================================================
+  # SYSTEM STATE VERSION
+  # ============================================================================
+
+  system.stateVersion = "25.05";
+}
