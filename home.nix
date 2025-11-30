@@ -1,108 +1,100 @@
-{ pkgs, ... }: {
+{ pkgs, lib, ... }: {
   home.stateVersion = "25.05";
-
+  
   wayland.windowManager.hyprland = {
     enable = true;
-    systemd.enable = true;
+    systemd.enable = false;
     xwayland.enable = true;
-
     extraConfig = ''
-      # ──────────────────────── Visuals ────────────────────────
-      monitor=,preferred,auto,1.2
-
+      monitor=,preferred,auto,1
+      
+      exec-once = swww-daemon
+      exec-once = sleep 1 && swww img ~/Pictures/Wallpapers/catppuccin-anime.jpg
+      exec-once = waybar
+      exec-once = dunst
+      exec-once = wl-paste --type text --watch cliphist store
+      exec-once = nm-applet --indicator
+      
+      env = XCURSOR_SIZE,24
+      
+      input {
+        kb_layout = us
+        follow_mouse = 1
+        touchpad { natural_scroll = true }
+      }
+      
       general {
-        gaps_in = 6
-        gaps_out = 12
-        border_size = 2
-        col.active_border = rgba(cba6f7ff) rgba(94e2d5ff) 45deg
-        col.inactive_border = rgba(45475a88)
+        gaps_in = 8
+        gaps_out = 16
+        border_size = 3
+        col.active_border = rgba(89b4faff) rgba(cba6f7ff) 45deg
+        col.inactive_border = rgba(313244aa)
         layout = dwindle
       }
-
+      
       decoration {
-        rounding = 12
-        blur {
-          enabled = true
-          size = 8
-          passes = 3
-          new_optimizations = true
-          ignore_opacity = true
-        }
+        rounding = 16
+        blur { enabled = true; size = 6; passes = 3; }
         drop_shadow = true
         shadow_range = 20
-        shadow_render_power = 4
-        col.shadow = rgba(000000aa)
       }
-
+      
       animations {
-        enabled = true
-        bezier = ease, 0.4, 0, 0.2, 1
-        animation = windows, 1, 4, ease, slide
-        animation = fade, 1, 6, ease
-        animation = workspaces, 1, 6, ease, slidevert
+        enabled = yes
+        bezier = wind, 0.05, 0.9, 0.1, 1.05
+        animation = windows, 1, 6, wind, slide
+        animation = fade, 1, 10, default
+        animation = workspaces, 1, 5, wind
       }
-
-      # ──────────────────────── Keybinds ────────────────────────
+      
       $mod = SUPER
-
       bind = $mod, Return, exec, kitty
+      bind = $mod, T, exec, kitty
       bind = $mod, Q, killactive
-      bind = $mod, D, exec, wofi --show drun -I
-      bind = $mod, Tab, cyclenext
-      bind = $mod SHIFT, Tab, cyclenext, prev
-
-      # Move windows
-      bind = $mod, h, movefocus, l
-      bind = $mod, j, movefocus, d
-      bind = $mod, k, movefocus, u
-      bind = $mod, l, movefocus, r
-
-      # Workspaces 1-9
-      ${builtins.concatStringsSep "\n" (map (i: "bind = $mod, ${toString i}, workspace, ${toString i}") (lib.range 1 9))}
-      ${builtins.concatStringsSep "\n" (map (i: "bind = $mod SHIFT, ${toString i}, movetoworkspace, ${toString i}") (lib.range 1 9))}
-
-      # Special keys
-      bind = , XF86AudioPlay, exec, playerctl play-pause
-      bind = , XF86AudioNext, exec, playerctl next
-      bind = , XF86AudioPrev, exec, playerctl previous
-      bind = , Print, exec, grim -g "$(slurp)" - | wl-copy
-
-      # Startup
-      exec-once = waybar
-      exec-once = swww init && swww img /home/paul/Pictures/Wallpapers/catppuccin-anime.jpg
-      exec-once = dunst
-      exec-once = cliphist restore
+      bind = $mod, M, exit
+      bind = $mod, D, exec, wofi --show drun
+      bind = $mod, F, fullscreen
+      bind = $mod, V, exec, cliphist list | wofi -dmenu | cliphist decode | wl-copy
+      bind = $mod SHIFT, S, exec, grim -g "$(slurp)" ~/Pictures/screenshot-$(date +%s).png
+      
+      bind = $mod, left, movefocus, l
+      bind = $mod, right, movefocus, r
+      bind = $mod, up, movefocus, u
+      bind = $mod, down, movefocus, d
+      
+      ${lib.concatMapStringsSep "\n" (i: 
+        "bind = $mod, ${toString i}, workspace, ${toString i}\nbind = $mod SHIFT, ${toString i}, movetoworkspace, ${toString i}"
+      ) (lib.range 1 9)}
+      
+      windowrulev2 = opacity 0.90 0.90,class:^(kitty)$
+      windowrulev2 = opacity 0.90 0.90,class:^(Code)$
     '';
   };
-
-  # Waybar + Dunst + Wofi with catppuccin-mocha
+  
   programs.waybar = {
     enable = true;
-    style = builtins.readFile (pkgs.fetchurl {
-      url = "https://raw.githubusercontent.com/catppuccin/waybar/main/themes/mocha.css";
-      hash = "sha256-7sE2v4s5i6v4uW6v2+6u7z8v9w0x1y2z3c4v5b6n7m8=";
-    });
-  };
-
-  programs.dunst = {
-    enable = true;
-    settings = {
-      global = {
-        corner_radius = 12;
-        follow = "keyboard";
-        font = "JetBrainsMono Nerd Font 11";
-        frame_width = 0;
-        offset = "15x15";
-      };
-      urgency_low = { background = "#1e1e2e"; foreground = "#cdd6f4"; };
-      urgency_normal = { background = "#1e1e2e"; foreground = "#89b4fa"; };
-      urgency_critical = { background = "#f38ba8"; foreground = "#11111b"; frame_color = "#f38ba8"; };
+    systemd.enable = false;
+    settings.mainBar = {
+      layer = "top";
+      position = "top";
+      height = 40;
+      modules-left = [ "hyprland/workspaces" ];
+      modules-center = [ "clock" ];
+      modules-right = [ "pulseaudio" "network" "cpu" "memory" "battery" ];
+      
+      clock.format = " {:%H:%M}";
+      cpu.format = " {usage}%";
+      memory.format = " {}%";
+      pulseaudio.format = "{icon} {volume}%";
+      network.format-wifi = " {essid}";
+      battery.format = "{icon} {capacity}%";
     };
+    style = ''
+      * { font-family: monospace; font-size: 13px; }
+      window#waybar { background: rgba(30,30,46,0.8); color: #cdd6f4; }
+      #workspaces button { padding: 0 10px; color: #6c7086; }
+      #workspaces button.active { color: #89b4fa; background: rgba(137,180,250,0.2); }
+      #clock, #cpu, #memory, #pulseaudio, #network, #battery { padding: 0 12px; margin: 5px 3px; background: rgba(49,50,68,0.6); border-radius: 12px; }
+    '';
   };
-
-  programs.wofi.enable = true;
-
-  home.packages = with pkgs; [
-    wofi grim slurp wl-clipboard cliphist swaylock-effects swww dunst waybar
-  ];
 }
