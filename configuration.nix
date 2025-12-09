@@ -28,7 +28,7 @@
   services.qemuGuest.enable = true;
   services.spice-vdagentd.enable = true;
 
-  networking.hostName = "elitedeskg4";
+  networking.hostName = "nixos";
   networking.networkmanager.enable = true;
   networking.firewall.allowedTCPPorts = [ 80 443 8384 8096 32400 9090 139 445 ];
   networking.firewall.allowedUDPPorts = [ 137 138 5353 ];
