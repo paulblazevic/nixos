@@ -124,8 +124,8 @@
     settings = {
       global = {
         "workgroup" = "WORKGROUP";
-        "server string" = "elitedeskg4";
-        "netbios name" = "elitedeskg4";
+        "server string" = "nixos";
+        "netbios name" = "nixos";
         "security" = "user";
         "hosts allow" = "192.168.1. 127.0.0.0.1 localhost";
         "hosts deny" = "0.0.0.0/0";
